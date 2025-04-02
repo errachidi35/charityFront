@@ -11,7 +11,7 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardContent } from "../../ui/card";
 import { Separator } from "../../ui/separator";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     motion,
     useScroll,
@@ -59,7 +59,7 @@ export const Header = () => {
             <div className="container flex h-16 items-center justify-between">
                 <div className="flex items-center gap-2">
                     <HomeIcon className="h-5 w-5" />
-                    <span className="font-bold text-xl">Charity</span>
+                    <span className="font-bold text-xl">WeHelp</span>
                 </div>
 
                 <nav className="hidden md:flex items-center space-x-6">
@@ -80,7 +80,7 @@ export const Header = () => {
                     <Button onClick={() => navigate("/login")} variant="outline" size="sm">
                         Login
                     </Button>
-                    <Button className="bg-green-primary hover:bg-green-700" size="sm">Sign up</Button>
+                    <Button onClick={() => navigate("/signup")} className="bg-green-primary hover:bg-green-700" size="sm">Sign up</Button>
                 </div>
             </div>
         </motion.header>
