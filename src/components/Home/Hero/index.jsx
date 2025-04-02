@@ -26,7 +26,7 @@ export const Hero = () => {
                     through community action.
                 </p>
                 <div className="pt-4">
-                    <Button className="bg-green-500 hover:bg-green-600 text-white">
+                    <Button className="bg-green-primary hover:bg-green-700 text-white">
                         Get Started
                     </Button>
                 </div>
