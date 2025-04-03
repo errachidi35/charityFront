@@ -7,7 +7,10 @@ import { About } from "./pages/About"
 import { Contact } from "./pages/Contact"
 import { Gallery } from "./pages/Gallery"
 import { Login } from "./pages/Login"
-import { Signup } from "./pages/Signup"
+import { Signup } from "./pages/Signup";
+import { MissionsGrid } from "./components/Missions/MissionsGrid";
+import { Donation } from "./pages/Donation";
+
 
 function App() {
   return (
@@ -21,6 +24,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<div>Page Not Found</div>}></Route>
+        <Route path="/" element={<MissionsGrid />} />
+    <Route path="/donate/:id" element={<Donation />} />
       </Routes>
     </Router>
 

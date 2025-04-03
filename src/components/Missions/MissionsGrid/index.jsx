@@ -4,8 +4,16 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardFooter } from "../../ui/card";
 import { Progress } from "../../ui/progress";
+import { useNavigate } from "react-router-dom";
+
 
 export const MissionsGrid = ({ filters }) => {
+  const navigate = useNavigate();
+
+const handleDonateClick = (mission) => {
+  navigate(`/donate/${mission.id}`, { state: mission });
+};
+
   const missions = [
     {
       id: 1,
@@ -118,7 +126,10 @@ export const MissionsGrid = ({ filters }) => {
               <div className="flex justify-between w-full">
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="text-xs">Volunteer</Button>
-                  <Button variant="outline" size="sm" className="text-xs">Donate</Button>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => handleDonateClick(mission)}>
+  Donate
+</Button>
+
                 </div>
                 <Button variant="outline" size="sm" className="text-xs">See more</Button>
               </div>
