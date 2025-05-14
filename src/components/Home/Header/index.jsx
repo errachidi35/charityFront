@@ -17,6 +17,9 @@ import {
     useScroll,
     useMotionValueEvent
 } from "framer-motion";
+import { useAuthContext } from "../../../hooks/useAuthContext";
+import { useLogout } from "../../../hooks/useLogout";
+
 
 export const Header = () => {
 
@@ -27,6 +30,10 @@ export const Header = () => {
     const [hidden, setHidden] = useState(false);
 
     const navigate = useNavigate();
+
+    const { user } = useAuthContext();
+    const { logout } = useLogout();
+
     useEffect(() => {
         // change the active state according to the current page
         const currentPath = location.pathname.substring(1) || "Home";
@@ -77,6 +84,9 @@ export const Header = () => {
                 </nav>
 
                 <div className="flex items-center gap-2">
+                    {user && (<Button onClick={() => logout()} variant="outline" size="sm">
+                        Logout
+                    </Button>)}
                     <Button onClick={() => navigate("/login")} variant="outline" size="sm">
                         Login
                     </Button>

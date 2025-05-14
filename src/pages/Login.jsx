@@ -4,17 +4,18 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Link } from "react-router-dom";
-
+import { useLogin } from "../hooks/useLogin";
 
 export const Login = () => {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const { login, isLoading, error } = useLogin();
 
     const handleSubmit = async e => {
         e.preventDefault();
 
-        console.log(email, password);
+        await login(email, password)
 
     }
 
@@ -49,13 +50,15 @@ export const Login = () => {
                                     onChange={e => { setPassword(e.target.value) }}
                                 />
                             </div>
-                            <Button className="bg-green-primary hover:bg-green-700 text-white w-full text-base my-2">
+                            <Button disabled={isLoading} className="bg-green-primary hover:bg-green-700 text-white w-full text-base my-2">
                                 Login
                             </Button>
                             <span className="text-gray-500">
                                 You don't have an account ?   <Link className="underline hover:text-green-700" to="/signup"> Click here to signup </Link>
                             </span>
                         </form>
+
+                        {error && <div className=""> {error} </div>}
                     </CardContent>
                 </Card>
             </div>

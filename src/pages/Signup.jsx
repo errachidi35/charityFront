@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Link } from "react-router-dom";
+import { useSignup } from "../hooks/useSignup";
 
 
 export const Signup = () => {
@@ -14,9 +15,13 @@ export const Signup = () => {
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
+    // signup hook
+    const { signup, isLoading, error } = useSignup();
+
     const handleSubmit = async e => {
         e.preventDefault();
 
+        await signup(firstName, lastName, email, password);
         console.log(email, password);
 
     }
@@ -43,7 +48,7 @@ export const Signup = () => {
                                         placeholder="Your first name"
                                         type="text"
                                         value={firstName}
-                                        onChange={e => { setEmail(e.target.value) }}
+                                        onChange={e => { setFirstName(e.target.value) }}
                                     />
                                 </div>
                                 <div className="w-1/2 text-left pl-1">
@@ -53,7 +58,7 @@ export const Signup = () => {
                                         placeholder="Your last name"
                                         type="text"
                                         value={lastName}
-                                        onChange={e => { setEmail(e.target.value) }}
+                                        onChange={e => { setLastName(e.target.value) }}
                                     />
                                 </div>
                             </div>
@@ -87,12 +92,13 @@ export const Signup = () => {
                                     onChange={e => { setPasswordConfirmation(e.target.value) }}
                                 />
                             </div>
-                            <Button className="bg-green-primary hover:bg-green-700 text-white w-full text-base my-2">
-                                Login
+                            <Button disabled={isLoading} className="bg-green-primary hover:bg-green-700 text-white w-full text-base my-2">
+                                Signup
                             </Button>
                             <span className="text-gray-500">
                                 Already have an account ?   <Link className="underline hover:text-green-700" to="/login"> Click here to login </Link>
                             </span>
+                            {error && <div className=""> {error} </div>}
                         </form>
                     </CardContent>
                 </Card>
