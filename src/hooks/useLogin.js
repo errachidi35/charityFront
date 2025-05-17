@@ -17,11 +17,11 @@ export const useLogin = () => {
         })
         const json = await response.json();
 
-        if (!response.ok) {
+        if (json.code === -1) {
             setIsLoading(false);
             setError("login error");
         }
-        if (response.ok) {
+        if (json.code === 1) {
             // save in local storage
             localStorage.setItem("user", JSON.stringify(json));
 

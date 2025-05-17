@@ -15,13 +15,13 @@ export const useSignup = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prenom, nom, email, motDePasse })
         })
-        // const json = await response.json();
+        const json = await response.json();
 
-        if (!response.ok) {
+        if (json.code === -1) {
             setIsLoading(false);
             setError("Signup error");
         }
-        if (response.ok) {
+        if (json.code === 1) {
             // // save in local storage
             // localStorage.setItem("user", JSON.stringify(json));
 

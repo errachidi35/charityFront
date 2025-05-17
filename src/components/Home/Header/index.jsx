@@ -9,7 +9,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
-import { Card, CardContent } from "../../ui/card";
+import Profile from "../../ui/profile";
 import { Separator } from "../../ui/separator";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -18,7 +18,6 @@ import {
     useMotionValueEvent
 } from "framer-motion";
 import { useAuthContext } from "../../../hooks/useAuthContext";
-import { useLogout } from "../../../hooks/useLogout";
 
 
 export const Header = () => {
@@ -32,7 +31,7 @@ export const Header = () => {
     const navigate = useNavigate();
 
     const { user } = useAuthContext();
-    const { logout } = useLogout();
+
 
     useEffect(() => {
         // change the active state according to the current page
@@ -84,13 +83,21 @@ export const Header = () => {
                 </nav>
 
                 <div className="flex items-center gap-2">
-                    {user && (<Button onClick={() => logout()} variant="outline" size="sm">
-                        Logout
-                    </Button>)}
-                    <Button onClick={() => navigate("/login")} variant="outline" size="sm">
-                        Login
-                    </Button>
-                    <Button onClick={() => navigate("/signup")} className="bg-green-primary hover:bg-green-700" size="sm">Sign up</Button>
+                    {user && (
+                        <>
+                            <Profile />
+                        </>)
+                    }
+                    {
+                        !user && (
+                            <>
+                                <Button onClick={() => navigate("/login")} variant="outline" size="sm">
+                                    Login
+                                </Button>
+                                <Button onClick={() => navigate("/signup")} className="bg-green-primary hover:bg-green-700" size="sm">Sign up</Button>
+                            </>)
+                    }
+
                 </div>
             </div>
         </motion.header>
