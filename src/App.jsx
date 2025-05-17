@@ -10,7 +10,15 @@ import { Login } from "./pages/Login"
 import { Signup } from "./pages/Signup";
 import { MissionsGrid } from "./components/Missions/MissionsGrid";
 import { Donation } from "./pages/Donation";
-
+import {PrivateRoute} from "./components/PrivateRoute";
+import {Dashboard} from "./pages/admin/Dashboard";
+import {MissionsAdmin} from "./pages/admin/Missions";
+import {Membres} from "./pages/admin/Membres";
+import {DonationsAdmin} from "./pages/admin/Donations";
+import {ContactsAdmin} from "./pages/admin/Contacts";
+import {BenevolesAdmin} from "./pages/admin/Benevoles";
+import {DiscussionsAdmin} from "./pages/admin/Discussions";
+import {ParticipationsAdmin} from "./pages/admin/Participations";
 
 function App() {
   return (
@@ -26,6 +34,16 @@ function App() {
         <Route path="*" element={<div>Page Not Found</div>}></Route>
         <Route path="/" element={<MissionsGrid />} />
     <Route path="/donate/:id" element={<Donation />} />
+   <Route path="/admin/dashboard" element={<Dashboard />} />
+<Route path="/admin/missions" element={<MissionsAdmin />} />
+<Route path="/admin/membres" element={<Membres />} />
+<Route path="/admin/donations" element={<DonationsAdmin />} />
+<Route path="/admin/contacts" element={<ContactsAdmin />} />
+<Route path="/admin/benevoles" element={<BenevolesAdmin />} />
+<Route path="/admin/discussions" element={<DiscussionsAdmin />} />
+<Route path="/admin/participations" element={<ParticipationsAdmin />} />
+  
+
       </Routes>
     </Router>
 

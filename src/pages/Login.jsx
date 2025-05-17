@@ -5,19 +5,49 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Link } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
+import { useNavigate } from "react-router-dom";
+
 
 export const Login = () => {
+    const navigate = useNavigate();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const { login, isLoading, error } = useLogin();
 
     const handleSubmit = async e => {
+        // e.preventDefault();
+
+        // await login(email, password);
+
+        // const user = JSON.parse(localStorage.getItem("user"));
+
+        // if (user?.role === "ADMIN") {
+        //     navigate("/dashboard");
+        // } else {
+        //     alert("Accès refusé. Seuls les administrateurs peuvent accéder à la gestion.");
+        // }
         e.preventDefault();
 
-        await login(email, password)
+  if (email === "admin@gmail.com" && password === "admin") {
+    // simuler l'utilisateur admin
+    const fakeUser = {
+      id: 1,
+      nom: "Admin",
+      prenom: "Super",
+      email: "admin@gmail.com",
+      role: "ADMIN",
+    };
 
-    }
+    // stocker dans localStorage et contexte
+    localStorage.setItem("user", JSON.stringify(fakeUser));
+    navigate("/admin/dashboard");
+  } else {
+    alert("Identifiants incorrects.");
+  }
+    };
+
+
 
     return (
         <>
