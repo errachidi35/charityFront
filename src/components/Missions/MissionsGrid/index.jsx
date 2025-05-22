@@ -1,86 +1,140 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { CalendarIcon, MapPinIcon } from "lucide-react";
-import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardFooter } from "../../ui/card";
 import { Progress } from "../../ui/progress";
-import { useNavigate } from "react-router-dom";
-
+import { toast } from "sonner";
+import { useAuthContext } from "../../../hooks/useAuthContext";
 
 export const MissionsGrid = ({ filters }) => {
+  const [missions, setMissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [participatedMissionIds, setParticipatedMissionIds] = useState([]);
   const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const token = user?.token;
+  console.log("token", token);
 
-const handleDonateClick = (mission) => {
-  navigate(`/donate/${mission.id}`, { state: mission });
+  // Remplacer la fonction fetchParticipations existante
+const fetchParticipations = async () => {
+  try {
+    if (!user?.id || !token) {
+      console.log("No user or token available");
+      return;
+    }
+
+    // Récupérer toutes les missions d'abord
+    const missionsRes = await axios.get("http://localhost:8080/api/mission/all");
+    const allMissions = missionsRes.data;
+    
+    // Pour chaque mission, vérifier la participation
+    const participationChecks = await Promise.all(
+      allMissions.map(async (mission) => {
+        try {
+          const res = await axios.get(
+            `http://localhost:8080/api/participation/check/${mission.id}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}` 
+              }
+            }
+          );
+          return res.data ? mission.id : null;
+        } catch (err) {
+          console.error(`Error checking participation for mission ${mission.id}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // Filtrer les IDs null et mettre à jour l'état
+    const participatedIds = participationChecks.filter(id => id !== null);
+    console.log("Participations trouvées:", participatedIds);
+    setParticipatedMissionIds(participatedIds);
+    
+  } catch (err) {
+    console.error("Erreur lors de la vérification des participations:", err);
+  }
 };
 
-  const missions = [
-    {
-      id: 1,
-      title: "Clean Water for All",
-      description:
-        "Clean, drinkable water means less illness and better hygiene for the poorest villages. Create a positive and sustainable difference now.",
-      image: "https://tse2.mm.bing.net/th?id=OIP.jIad-_uUvKv6KTyEaRz41AHaDo&pid=Api",
-      raised: 21000,
-      goal: 50000,
-      participants: 14,
-      date: "Sunday 23/03",
-      location: "Toulouse",
-    },
-    {
-      id: 2,
-      title: "Improve Education",
-      description:
-        "Education is the key to breaking the cycle of poverty. Help build schools and provide resources to children in need.",
-      image: "https://tse2.mm.bing.net/th?id=OIP.CoQLqsxpdnSMprxS-7w6SwHaEF&pid=Api",
-      raised: 31000,
-      goal: 50000,
-      participants: 25,
-      date: "Sunday 23/03",
-      location: "Toulouse",
-    },
-    {
-      id: 3,
-      title: "End Hunger",
-      description:
-        "Millions suffer from hunger every day. Support food distribution efforts to provide essential meals to those in need.",
-      image: "https://tse2.mm.bing.net/th?id=OIP.i_gbgUqlXnOjwGC384ynSAHaEK&pid=Api",
-      raised: 10000,
-      goal: 50000,
-      participants: 8,
-      date: "Sunday 23/03",
-      location: "Paris",
-    },
-    {
-      id: 4,
-      title: "Food Distribution",
-      description:
-        "Providing food to those in need is crucial. Join us in distributing essential groceries and meals to underprivileged communities.",
-      image: "https://tse2.mm.bing.net/th?id=OIP.RQSlKL3lfR0YAVYnT-i4sgHaE8&pid=Api",
-      raised: 0,
-      goal: 5000,
-      participants: 0,
-      date: "Sunday 23/03",
-      location: "Lyon",
-    }
-  ];
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
+
+
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/mission/all")
+      .then((response) => {
+        setMissions(response.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des missions:", error);
+        setLoading(false);
+      });
+  }, []);
+
+ // Mettre à jour le useEffect
+  useEffect(() => {
+    if (user?.id && user?.role === "BENEVOLE" && token) {
+      console.log("Vérification des participations pour le bénévole:", user.id);
+      fetchParticipations();
+    }
+  }, [user, token]);
+
+  const handleParticipate = async (missionId) => {
+    if (!user || user.role !== "BENEVOLE") {
+      return toast.error("❌ Vous devez être connecté en tant que bénévole.");
+    }
+
+    try {
+      await axios.post(
+        "http://localhost:8080/api/mission/participate",
+        { idMission: missionId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+
+          },
+        }
+      );
+
+      toast.success("🎉 Participation enregistrée !");
+      fetchParticipations();
+    } catch (error) {
+  let message = "❌ Une erreur est survenue pendant l'inscription.";
+  
+  if (typeof error.response?.data === "string") {
+    message = error.response.data;
+  } else if (typeof error.response?.data?.message === "string") {
+    message = error.response.data.message;
+  }
+
+  toast.error(message);
+  console.error(error);
+}
+
+  };
+
+  const handleDonateClick = (mission) => {
+    navigate(`/donate/${mission.id}`, { state: mission });
   };
 
   const filteredMissions = missions.filter((mission) => {
-    const matchesKeyword = !filters.keywords || 
-      mission.title.toLowerCase().includes(filters.keywords.toLowerCase());
-    const matchesLocation = !filters.location || 
-      mission.location.toLowerCase().includes(filters.location.toLowerCase());
-
+    const matchesKeyword =
+      !filters.keywords ||
+      mission.nom.toLowerCase().includes(filters.keywords.toLowerCase());
+    const matchesLocation =
+      !filters.location ||
+      mission.lieu.toLowerCase().includes(filters.location.toLowerCase());
     return matchesKeyword && matchesLocation;
   });
+
+  if (loading) return <p className="text-center">Loading...</p>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -88,28 +142,37 @@ const handleDonateClick = (mission) => {
         filteredMissions.map((mission) => (
           <Card key={mission.id} className="overflow-hidden border-none shadow-md">
             <div className="relative h-48 bg-gray-200">
-              <img src={mission.image} alt={mission.title} className="w-full h-full object-cover" />
+              <img
+                src="https://source.unsplash.com/800x600/?volunteer,charity"
+                alt={mission.nom}
+                className="w-full h-full object-cover"
+              />
             </div>
             <CardContent className="p-6">
-              <h3 className="text-xl font-bold mb-2">{mission.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{mission.description}</p>
-
+              <h3 className="text-xl font-bold mb-2">{mission.nom}</h3>
+              <p className="text-gray-600 text-sm mb-4">{mission.subtitle}</p>
               <div className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span>Raised: {formatCurrency(mission.raised)}</span>
-                  <span className="text-gray-500">Goal: {formatCurrency(mission.goal)}</span>
+                  <span>Collecté: ${mission.raised?.toFixed(2) || "0.00"}</span>
+                  <span>Objectif: ${mission.goal?.toFixed(2) || "0.00"}</span>
                 </div>
-                <Progress value={(mission.raised / mission.goal) * 100} className="h-2 bg-gray-200" />
+                <Progress
+                  value={
+                    typeof mission.raised === "number" &&
+                    typeof mission.goal === "number" &&
+                    mission.goal > 0
+                      ? Math.min((mission.raised / mission.goal) * 100, 100)
+                      : 0
+                  }
+                  className="h-2 bg-gray-200"
+                />
               </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-500">
-                  {mission.participants > 0 ? (
-                    <span>{mission.participants} Participants</span>
-                  ) : (
-                    <span>Be the first to join!</span>
-                  )}
-                </div>
+              <div className="text-sm text-gray-500 mt-4">
+                {mission.nbParticipants > 0 ? (
+                  <span>{mission.nbParticipants} Participants</span>
+                ) : (
+                  <span>Be the first to join!</span>
+                )}
               </div>
             </CardContent>
             <CardFooter className="bg-gray-50 px-6 py-3 flex flex-col space-y-3">
@@ -120,20 +183,50 @@ const handleDonateClick = (mission) => {
                 </Badge>
                 <Badge variant="outline" className="flex items-center gap-1 rounded-full">
                   <MapPinIcon className="h-3 w-3" />
-                  <span>{mission.location}</span>
+                  <span>{mission.lieu}</span>
                 </Badge>
               </div>
               <div className="flex justify-between w-full">
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="text-xs">Volunteer</Button>
-                  <Button variant="outline" size="sm" className="text-xs" onClick={() => handleDonateClick(mission)}>
-  Donate
+
+                    {participatedMissionIds.includes(mission.id) ? (
+    <Button 
+      disabled 
+      size="sm" 
+      className="text-xs bg-green-500 hover:bg-green-500 text-white cursor-not-allowed"
+    >
+      Joined
+    </Button>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      className="text-xs"
+      onClick={() => handleParticipate(mission.id)}
+    >
+      Volunteer
+    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handleDonateClick(mission)}
+                  >
+                    Donate
+                  </Button>
+                </div>
+                <Button variant="outline" size="sm" className="text-xs">
+                  See more
+                </Button>
+              </div>
+              <Button
+  className="w-full bg-black text-white hover:bg-gray-800"
+  onClick={() => navigate(`/mission/${mission.id}`, { state: mission })}
+>
+  VIEW DETAILS
 </Button>
 
-                </div>
-                <Button variant="outline" size="sm" className="text-xs">See more</Button>
-              </div>
-              <Button className="w-full bg-black text-white hover:bg-gray-800">VIEW DETAILS</Button>
             </CardFooter>
           </Card>
         ))

@@ -1,9 +1,27 @@
-// src/pages/Dashboard.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/card";
-import { FaUser, FaTasks, FaDonate, FaCalendarAlt, FaSignOutAlt } from "react-icons/fa";
-import { FiUsers, FiUserPlus, FiBox, FiGift, FiMessageCircle, FiBarChart2, FiImage, FiMail, FiShield } from "react-icons/fi";
+import {
+  FaUser,
+  FaTasks,
+  FaDonate,
+  FaCalendarAlt,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import {
+  FiUsers,
+  FiUserPlus,
+  FiBox,
+  FiGift,
+  FiMessageCircle,
+  FiBarChart2,
+  FiImage,
+  FiMail,
+  FiShield,
+} from "react-icons/fi";
+import axiosAdmin from "../../hooks/axiosAdmin";
+import { useLogout } from "../../hooks/useLogout";
+import { useAuthContext } from "../../hooks/useAuthContext";
 
 const menuItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: <FiBarChart2 /> },
@@ -19,6 +37,39 @@ const menuItems = [
 ];
 
 export const Dashboard = () => {
+  const { logout } = useLogout();
+  const { user } = useAuthContext();
+
+  const [stats, setStats] = useState({
+    membres: 0,
+    missions: 0,
+    dons: 0,
+    events: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [resMembres, resMissions, resDons] = await Promise.all([
+          axiosAdmin.get("/membre/all"),
+          axiosAdmin.get("/mission/all"),
+          axiosAdmin.get("/don/all"),
+        ]);
+
+        setStats({
+          membres: resMembres.data.length,
+          missions: resMissions.data.length,
+          dons: resDons.data.reduce((total, don) => total + don.montant, 0),
+          events: 3, // à remplacer plus tard par un vrai fetch
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement des stats :", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -41,8 +92,13 @@ export const Dashboard = () => {
           </nav>
         </div>
         <div className="px-4 py-6 border-t">
-          <p className="text-sm text-gray-500 mb-2">Connecté en tant que <span className="font-semibold">Super Admin</span></p>
-          <button className="flex items-center gap-2 px-3 py-2 w-full text-left bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded">
+          <p className="text-sm text-gray-500 mb-2">
+            Connecté en tant que <span className="font-semibold">{user?.prenom ?? "Admin"}</span>
+          </p>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-3 py-2 w-full text-left bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded"
+          >
             <FaSignOutAlt /> Logout
           </button>
         </div>
@@ -57,7 +113,7 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm text-gray-600">Membres Actifs</h4>
-                <p className="text-2xl font-bold">120</p>
+                <p className="text-2xl font-bold">{stats.membres}</p>
               </div>
               <FaUser className="text-green-500 text-xl" />
             </div>
@@ -66,7 +122,7 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm text-gray-600">Missions en Cours</h4>
-                <p className="text-2xl font-bold">15</p>
+                <p className="text-2xl font-bold">{stats.missions}</p>
               </div>
               <FaTasks className="text-yellow-500 text-xl" />
             </div>
@@ -74,8 +130,8 @@ export const Dashboard = () => {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm text-gray-600">Dons (ce mois)</h4>
-                <p className="text-2xl font-bold">€2,500</p>
+                <h4 className="text-sm text-gray-600">Dons (total)</h4>
+                <p className="text-2xl font-bold">€{stats.dons}</p>
               </div>
               <FaDonate className="text-pink-500 text-xl" />
             </div>
@@ -84,7 +140,7 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm text-gray-600">Événements à venir</h4>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{stats.events}</p>
               </div>
               <FaCalendarAlt className="text-purple-500 text-xl" />
             </div>
@@ -99,4 +155,3 @@ export const Dashboard = () => {
     </div>
   );
 };
-

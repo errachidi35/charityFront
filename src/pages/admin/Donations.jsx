@@ -1,25 +1,47 @@
-// src/pages/admin/Donations.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import Sidebar from "../../components/Sidebar";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import axiosAdmin from "../../hooks/axiosAdmin";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 export const DonationsAdmin = () => {
-  const [donations, setDonations] = useState([
-    { id: 1, montant: 100, methode: "CB", date: "2025-01-05", donateur: "Jean Dupont" },
-    { id: 2, montant: 250, methode: "Paypal", date: "2025-01-18", donateur: "Claire Martin" },
-    { id: 3, montant: 150, methode: "CB", date: "2025-02-10", donateur: "Ali Rahmani" },
-    { id: 4, montant: 180, methode: "CB", date: "2025-02-15", donateur: "Sofia Lemoine" },
-    { id: 5, montant: 120, methode: "Especes", date: "2025-03-01", donateur: "Zakaria Meftah" },
-    { id: 6, montant: 300, methode: "Virement", date: "2025-03-22", donateur: "Isabelle Petit" },
-    { id: 7, montant: 220, methode: "Paypal", date: "2025-04-11", donateur: "Farid El Yazid" },
-    { id: 8, montant: 170, methode: "CB", date: "2025-04-25", donateur: "Julie Morel" },
-    { id: 9, montant: 90, methode: "Especes", date: "2025-05-02", donateur: "Nina Dupuis" },
-    { id: 10, montant: 250, methode: "Virement", date: "2025-05-13", donateur: "Hamza Belkacem" }
-  ]);
+  const [donations, setDonations] = useState([]);
 
-  const deleteDonation = (id) => {
-    setDonations(donations.filter((don) => don.id !== id));
+  // Charger les dons depuis l'API
+  const fetchDonations = async () => {
+    try {
+      const res = await axiosAdmin.get("/don/all");
+          console.log("🔥 Données reçues du backend :", res.data);
+
+      setDonations(res.data);
+    } catch (err) {
+      console.error("Erreur chargement dons :", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDonations();
+  }, []);
+
+  const deleteDonation = async (id) => {
+    try {
+      await axiosAdmin.delete(`/don/${id}`);
+      setDonations((prev) => prev.filter((don) => don.id !== id));
+    } catch (err) {
+      console.error("Erreur suppression don :", err);
+    }
   };
 
   const parseMonth = (dateStr) => {
@@ -27,22 +49,24 @@ export const DonationsAdmin = () => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   };
 
-  const monthlyData = Object.values(
-    donations.reduce((acc, don) => {
-      const month = parseMonth(don.date);
-      acc[month] = acc[month] || { month, montant: 0 };
-      acc[month].montant += don.montant;
-      return acc;
-    }, {})
-  );
-
   const methodData = Object.values(
-    donations.reduce((acc, don) => {
-      acc[don.methode] = acc[don.methode] || { methode: don.methode, montant: 0 };
-      acc[don.methode].montant += don.montant;
-      return acc;
-    }, {})
-  );
+  donations.reduce((acc, don) => {
+    const method = don.moyenPaiement;
+    acc[method] = acc[method] || { methode: method, montant: 0 };
+    acc[method].montant += don.montant;
+    return acc;
+  }, {})
+);
+
+const monthlyData = Object.values(
+  donations.reduce((acc, don) => {
+    const month = parseMonth(don.date);
+    acc[month] = acc[month] || { month, montant: 0 };
+    acc[month].montant += don.montant;
+    return acc;
+  }, {})
+);
+
 
   const COLORS = ["#16a34a", "#2563eb", "#f97316", "#7c3aed", "#dc2626"];
 
@@ -55,29 +79,36 @@ export const DonationsAdmin = () => {
         <div className="overflow-x-auto bg-white shadow rounded mb-8">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Donateur</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant (€)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Moyen de paiement</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {donations.map((don) => (
-                <tr key={don.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{don.donateur}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{don.montant}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{don.methode}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{don.date}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => deleteDonation(don.id)} className="text-red-600 hover:text-red-800">
-                      <FaTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+  <tr>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant (€)</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Méthode</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Donateur</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mission</th>
+    <th className="px-6 py-3 text-right"></th>
+  </tr>
+</thead>
+<tbody className="bg-white divide-y divide-gray-200">
+  {donations.map((don) => (
+    <tr key={don.id}>
+      <td className="px-6 py-4 whitespace-nowrap">{don.id}</td>
+      <td className="px-6 py-4 whitespace-nowrap">{don.date}</td>
+      <td className="px-6 py-4 whitespace-nowrap">{don.montant}</td>
+      <td className="px-6 py-4 whitespace-nowrap">{don.moyenPaiement}</td>
+      <td className="px-6 py-4 whitespace-nowrap">{don.nomDonateur}</td>
+<td className="px-6 py-4 whitespace-nowrap">
+  {don.mission?.nom ?? "—"}
+</td>
+      <td className="px-6 py-4 text-right">
+        <button onClick={() => deleteDonation(don.id)} className="text-red-600 hover:text-red-800">
+          <FaTrash />
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
           </table>
         </div>
 

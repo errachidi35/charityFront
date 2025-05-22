@@ -1,5 +1,7 @@
 import React from "react";
 import './App.css';
+import { Toaster } from "sonner";
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home } from "./pages/Home";
 import { Missions } from "./pages/Missions";
@@ -19,10 +21,15 @@ import {ContactsAdmin} from "./pages/admin/Contacts";
 import {BenevolesAdmin} from "./pages/admin/Benevoles";
 import {DiscussionsAdmin} from "./pages/admin/Discussions";
 import {ParticipationsAdmin} from "./pages/admin/Participations";
+import { MyParticipations } from "./pages/MyParticipations"; // en haut
+import { MissionDetails } from "./pages/MissionDetails"; // en haut
 
 function App() {
   return (
     <Router>
+      {/* ✅ Affiche les toasts animés partout */}
+      <Toaster richColors position="top-right" />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -33,20 +40,20 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<div>Page Not Found</div>}></Route>
         <Route path="/" element={<MissionsGrid />} />
-    <Route path="/donate/:id" element={<Donation />} />
-   <Route path="/admin/dashboard" element={<Dashboard />} />
-<Route path="/admin/missions" element={<MissionsAdmin />} />
-<Route path="/admin/membres" element={<Membres />} />
-<Route path="/admin/donations" element={<DonationsAdmin />} />
-<Route path="/admin/contacts" element={<ContactsAdmin />} />
-<Route path="/admin/benevoles" element={<BenevolesAdmin />} />
-<Route path="/admin/discussions" element={<DiscussionsAdmin />} />
-<Route path="/admin/participations" element={<ParticipationsAdmin />} />
-  
+        <Route path="/donate/:id" element={<Donation />} />
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/missions" element={<MissionsAdmin />} />
+        <Route path="/admin/membres" element={<Membres />} />
+        <Route path="/admin/donations" element={<DonationsAdmin />} />
+        <Route path="/admin/contacts" element={<ContactsAdmin />} />
+        <Route path="/admin/benevoles" element={<BenevolesAdmin />} />
+        <Route path="/admin/discussions" element={<DiscussionsAdmin />} />
+        <Route path="/admin/participations" element={<ParticipationsAdmin />} />
+        <Route path="/my-participations" element={<MyParticipations />} />
+<Route path="/mission/:id" element={<MissionDetails />} />
 
       </Routes>
     </Router>
-
   );
 }
 
