@@ -9,7 +9,7 @@ import { Progress } from "../../ui/progress";
 import { toast } from "sonner";
 import { useAuthContext } from "../../../hooks/useAuthContext";
 
-export const MissionsGrid = ({ filters }) => {
+export const MissionsGrid = ({ filters, missions: propsMissions  }) => {
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [participatedMissionIds, setParticipatedMissionIds] = useState([]);
@@ -64,18 +64,23 @@ const fetchParticipations = async () => {
 
 
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/mission/all")
-      .then((response) => {
-        setMissions(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Erreur lors de la récupération des missions:", error);
-        setLoading(false);
-      });
-  }, []);
+   useEffect(() => {
+    if (propsMissions) {
+      setMissions(propsMissions);
+      setLoading(false);
+    } else {
+      axios
+        .get("http://localhost:8080/api/mission/all")
+        .then((response) => {
+          setMissions(response.data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Erreur lors de la récupération des missions:", error);
+          setLoading(false);
+        });
+    }
+  }, [propsMissions]);
 
  // Mettre à jour le useEffect
   useEffect(() => {
@@ -86,39 +91,48 @@ const fetchParticipations = async () => {
   }, [user, token]);
 
   const handleParticipate = async (missionId) => {
-    if (!user || user.role !== "BENEVOLE") {
-      return toast.error("❌ Vous devez être connecté en tant que bénévole.");
-    }
-
-    try {
-      await axios.post(
-        "http://localhost:8080/api/mission/participate",
-        { idMission: missionId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-
-          },
-        }
-      );
-
-      toast.success("🎉 Participation enregistrée !");
-      fetchParticipations();
-    } catch (error) {
-  let message = "❌ Une erreur est survenue pendant l'inscription.";
-  
-  if (typeof error.response?.data === "string") {
-    message = error.response.data;
-  } else if (typeof error.response?.data?.message === "string") {
-    message = error.response.data.message;
+  if (!user || user.role !== "BENEVOLE") {
+    return toast.error("❌ Vous devez être connecté en tant que bénévole.");
   }
 
-  toast.error(message);
-  console.error(error);
-}
+  try {
+    await axios.post(
+      "http://localhost:8080/api/mission/participate",
+      { idMission: missionId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      }
+    );
 
-  };
+    toast.success("🎉 Participation enregistrée !");
+    fetchParticipations();
+
+    // 🔼 Incrémente nbParticipants localement
+    setMissions((prevMissions) =>
+      prevMissions.map((m) =>
+        m.id === missionId ? { ...m, nbParticipants: (m.nbParticipants || 0) + 1 } : m
+      )
+    );
+        fetchParticipations();
+
+
+  } catch (error) {
+    let message = "❌ Une erreur est survenue pendant l'inscription.";
+
+    if (typeof error.response?.data === "string") {
+      message = error.response.data;
+    } else if (typeof error.response?.data?.message === "string") {
+      message = error.response.data.message;
+    }
+
+    toast.error(message);
+    console.error(error);
+  }
+};
+
 
   const handleDonateClick = (mission) => {
     navigate(`/donate/${mission.id}`, { state: mission });

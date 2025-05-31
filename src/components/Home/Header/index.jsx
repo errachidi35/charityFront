@@ -69,18 +69,48 @@ export const Header = () => {
                 </div>
 
                 <nav className="hidden md:flex items-center space-x-6">
-                    {navItems.map((item, index) => (
+  {navItems.map((item, index) => (
+    <Link
+      key={index}
+      to={"/" + (item === "Home" ? "" : item.toLowerCase())}
+      className={`text-sm font-medium transition-colors hover:text-primary ${
+        item === active ? "text-primary" : "text-muted-foreground"
+      }`}
+    >
+      {item}
+    </Link>
+  ))}
 
-                        <Link
-                            key={index}
-                            to={"/" + (item === "Home" ? "" : item.toLowerCase())}
-                            className={`text-sm font-medium transition-colors hover:text-primary ${item === active ? "text-primary" : "text-muted-foreground"
-                                }`}
-                        >
-                            {item}
-                        </Link>
-                    ))}
-                </nav>
+  {/* 👉 Liens réservés aux membres */}
+  {user?.role === "MEMBRE" && (
+    <>
+      {/* <Link
+        to="/mes-benevoles"
+        className={`text-sm font-medium transition-colors hover:text-primary ${
+          location.pathname === "/mes-benevoles" ? "text-primary" : "text-muted-foreground"
+        }`}
+      >
+        Bénévoles de mes missions
+      </Link>
+      <Link
+        to="/mes-participations"
+        className={`text-sm font-medium transition-colors hover:text-primary ${
+          location.pathname === "/mes-participations" ? "text-primary" : "text-muted-foreground"
+        }`}
+      >
+        Participations reçues
+      </Link> */}
+       <Link
+    to="/mesmissions"
+    className="text-gray-700 hover:text-green-600 px-4 py-2"
+  >
+    Mes missions
+  </Link>
+    </>
+  )}
+
+</nav>
+
 
                 <div className="flex items-center gap-2">
                     {user && (

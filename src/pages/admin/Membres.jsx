@@ -77,6 +77,8 @@ export const Membres = () => {
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prénom</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mot de passe</th>
+
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Domaine</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date d'inscription</th>
     <th className="px-6 py-3 text-right"></th>
@@ -89,6 +91,8 @@ export const Membres = () => {
       <td className="px-6 py-4">{membre.nom}</td>
       <td className="px-6 py-4">{membre.prenom}</td>
       <td className="px-6 py-4">{membre.email}</td>
+            <td className="px-6 py-4">{membre.motDePasse}</td>
+
       <td className="px-6 py-4">{membre.domaine}</td>
       <td className="px-6 py-4">{membre.dateInscription}</td>
       <td className="px-6 py-4 text-right">

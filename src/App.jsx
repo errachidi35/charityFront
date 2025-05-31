@@ -23,6 +23,13 @@ import {DiscussionsAdmin} from "./pages/admin/Discussions";
 import {ParticipationsAdmin} from "./pages/admin/Participations";
 import { MyParticipations } from "./pages/MyParticipations"; // en haut
 import { MissionDetails } from "./pages/MissionDetails"; // en haut
+import { RequireMembre } from "./routes/RequireMembre"; // en haut
+import { CreateMission } from "./pages/membre/CreateMission"; // en haut
+import { BenevolesMissions } from "./pages/membre/BenevolesMissions";
+import { ParticipationsMissions } from "./pages/membre/ParticipationsMissions"; // en haut
+import { MesMissions } from "./pages/membre/MesMissions"; // en haut
+import { MesMissionsTable } from "./pages/membre/MesMissionsTable"; // en haut
+
 
 function App() {
   return (
@@ -51,6 +58,33 @@ function App() {
         <Route path="/admin/participations" element={<ParticipationsAdmin />} />
         <Route path="/my-participations" element={<MyParticipations />} />
 <Route path="/mission/:id" element={<MissionDetails />} />
+<Route
+          path="/createmission"
+          element={
+            <RequireMembre>
+              <CreateMission />
+            </RequireMembre>
+          }
+        />
+        <Route path="/missions-table" element={<MesMissionsTable />} />
+
+        <Route
+  path="/mes-benevoles"
+  element={
+    <RequireMembre>
+      <BenevolesMissions />
+    </RequireMembre>
+  }
+/>
+<Route
+  path="/mes-participations"
+  element={
+    <RequireMembre>
+      <ParticipationsMissions />
+    </RequireMembre>
+  }
+/>
+<Route path="/mesmissions" element={<MesMissions />} />
 
       </Routes>
     </Router>
