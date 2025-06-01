@@ -13,10 +13,7 @@ import {
   FiUserPlus,
   FiBox,
   FiGift,
-  FiMessageCircle,
   FiBarChart2,
-  FiImage,
-  FiMail,
   FiShield,
 } from "react-icons/fi";
 import axiosAdmin from "../../hooks/axiosAdmin";
@@ -30,9 +27,6 @@ const menuItems = [
   { to: "/admin/benevoles", label: "Bénévoles", icon: <FiUserPlus /> },
   { to: "/admin/donations", label: "Donations", icon: <FiGift /> },
   { to: "/admin/participations", label: "Participations", icon: <FaCalendarAlt /> },
-  { to: "/admin/galerie", label: "Galerie", icon: <FiImage /> },
-  { to: "/admin/contacts", label: "Contacts", icon: <FiMail /> },
-  { to: "/admin/messages", label: "Messages", icon: <FiMessageCircle /> },
   { to: "/admin/admins", label: "Admins", icon: <FiShield /> },
 ];
 
@@ -149,7 +143,7 @@ export const Dashboard = () => {
 
         <div className="bg-white rounded shadow p-6">
           <h2 className="text-xl font-semibold mb-2">Activité Récente</h2>
-          <p className="text-sm text-gray-500">Les graphiques et les journaux d’activité apparaîtront ici…</p>
+          <p className="text-sm text-gray-500">Les graphiques et les journaux d'activité apparaîtront ici…</p>
         </div>
       </main>
     </div>

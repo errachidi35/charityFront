@@ -1,29 +1,136 @@
 import React, { useEffect, useState } from "react";
-import { FaTrash, FaEdit } from "react-icons/fa";
+import { FaTrash, FaComments, FaPlus } from "react-icons/fa";
 import Sidebar from "../../components/Sidebar";
 import axiosAdmin from "../../hooks/axiosAdmin";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const MissionsAdmin = () => {
   const [missions, setMissions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [selectedMissionId, setSelectedMissionId] = useState(null);
-  const [editingMission, setEditingMission] = useState(null);
+  const [discussions, setDiscussions] = useState({});
   const [formData, setFormData] = useState({
     titre: "",
     dateDebut: "",
     dateFin: "",
     status: "PLANNED",
   });
+  const navigate = useNavigate();
 
   // Charger les missions depuis le backend
   const fetchMissions = async () => {
     try {
       const res = await axiosAdmin.get("/mission/all");
       setMissions(res.data);
+      // Charger les discussions pour chaque mission
+      res.data.forEach(mission => {
+        fetchDiscussionForMission(mission.id);
+      });
     } catch (err) {
       console.error("Erreur lors du chargement des missions :", err);
+      toast.error("Erreur lors du chargement des missions");
+    }
+  };
+
+  // Charger la discussion pour une mission
+  const fetchDiscussionForMission = async (missionId) => {
+    try {
+      const res = await axiosAdmin.get(`/discussion/mission/${missionId}`);
+      setDiscussions(prev => ({
+        ...prev,
+        [missionId]: res.data
+      }));
+    } catch (err) {
+      console.error(`Erreur lors du chargement de la discussion pour la mission ${missionId}:`, err);
+      setDiscussions(prev => ({
+        ...prev,
+        [missionId]: null
+      }));
+    }
+  };
+
+  // Créer une discussion pour une mission
+  const createDiscussion = async (missionId) => {
+    try {
+      // Vérifier que l'ID de mission est valide
+      if (!missionId) {
+        toast.error("ID de mission invalide");
+        return;
+      }
+
+      // Récupérer les informations de l'utilisateur
+      const user = JSON.parse(localStorage.getItem('user'));
+      console.log('Current user:', {
+        id: user?.id,
+        roles: user?.roles,
+        token: user?.token ? 'Present' : 'Missing'
+      });
+
+      // Créer l'objet discussion avec le bon format
+      const discussionData = {
+        mission: {
+          id: missionId
+        },
+        titre: `Discussion de la mission #${missionId}`,
+        dateCreation: new Date().toISOString()
+      };
+
+      console.log("Tentative de création de discussion:", discussionData);
+
+      const response = await axiosAdmin.post("/discussion/create", discussionData);
+      
+      if (response.data) {
+        console.log("Discussion créée:", response.data);
+        toast.success("Discussion créée avec succès");
+        await fetchDiscussionForMission(missionId);
+      }
+    } catch (error) {
+      console.error("Erreur détaillée:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+          data: error.config?.data
+        }
+      });
+      
+      if (error.response?.status === 401) {
+        console.log("Vérification des headers de la requête:", error.config?.headers);
+        toast.error("Session expirée ou droits insuffisants. Veuillez vous reconnecter.");
+        // Attendre un peu avant la redirection pour que l'utilisateur puisse voir le message
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(`Erreur lors de la création de la discussion (${error.response?.status || 'Erreur inconnue'})`);
+      }
+    }
+  };
+
+  // Supprimer une discussion
+  const deleteDiscussion = async (discussionId, missionId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette discussion ?")) {
+      return;
+    }
+
+    try {
+      await axiosAdmin.delete(`/discussion/${discussionId}`);
+      toast.success("Discussion supprimée avec succès");
+      setDiscussions(prev => ({
+        ...prev,
+        [missionId]: null
+      }));
+    } catch (err) {
+      console.error("Erreur lors de la suppression de la discussion:", err);
+      toast.error("Erreur lors de la suppression de la discussion");
     }
   };
 
@@ -35,6 +142,7 @@ export const MissionsAdmin = () => {
       setShowParticipantsModal(true);
     } catch (err) {
       console.error("Erreur lors du chargement des participants :", err);
+      toast.error("Erreur lors du chargement des participants");
     }
   };
 
@@ -46,41 +154,79 @@ export const MissionsAdmin = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editingMission) {
-      // Édition locale uniquement (pas de PUT côté backend pour l'instant)
-      setMissions((prev) =>
-        prev.map((m) =>
-          m.id === editingMission.id ? { ...editingMission, ...formData } : m
-        )
-      );
-    }
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.token) {
+        toast.error("Vous devez être connecté pour modifier une mission");
+        navigate('/login');
+        return;
+      }
 
-    setFormData({ titre: "", dateDebut: "", dateFin: "", status: "PLANNED" });
-    setEditingMission(null);
-    setShowModal(false);
+      if (selectedMissionId) {
+        // Mise à jour d'une mission existante
+        const response = await axiosAdmin.put(`/mission/${selectedMissionId}`, {
+          ...formData,
+          type: formData.type || missions.find(m => m.id === selectedMissionId)?.typeMission,
+          goal: formData.goal || missions.find(m => m.id === selectedMissionId)?.goal,
+          subtitle: formData.subtitle || missions.find(m => m.id === selectedMissionId)?.subtitle
+        });
+
+        if (response.data) {
+          setMissions(prev =>
+            prev.map(m => m.id === selectedMissionId ? response.data : m)
+          );
+          toast.success("Mission modifiée avec succès");
+        }
+      } else {
+        // Création d'une nouvelle mission
+        const response = await axiosAdmin.post("/mission/create", formData);
+        if (response.data) {
+          setMissions(prev => [...prev, response.data]);
+          toast.success("Mission créée avec succès");
+        }
+      }
+
+      setFormData({ titre: "", dateDebut: "", dateFin: "", status: "PLANNED" });
+      setShowModal(false);
+      
+      // Rafraîchir la liste des missions
+      fetchMissions();
+    } catch (error) {
+      console.error("Erreur détaillée:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+
+      if (error.response?.status === 401) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
+        navigate('/login');
+      } else if (error.response?.status === 403) {
+        toast.error("Vous n'avez pas les droits nécessaires pour cette action");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Erreur lors de la modification de la mission");
+      }
+    }
   };
 
   const deleteMission = async (id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette mission ?")) {
+      return;
+    }
+
     try {
       await axiosAdmin.delete(`/mission/${id}`);
       setMissions((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Mission supprimée avec succès");
     } catch (err) {
       console.error("Erreur lors de la suppression :", err);
+      toast.error("Erreur lors de la suppression de la mission");
     }
-  };
-
-  const startEdit = (mission) => {
-    setEditingMission(mission);
-    setFormData({
-      titre: mission.titre,
-      dateDebut: mission.dateDebut,
-      dateFin: mission.dateFin,
-      status: mission.status,
-    });
-    setShowModal(true);
   };
 
   return (
@@ -88,7 +234,7 @@ export const MissionsAdmin = () => {
       <Sidebar />
       <div className="flex-1 p-8 overflow-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Gestion des Missions</h2>
+          <h2 className="text-2xl font-bold">Liste des Missions</h2>
         </div>
 
         <div className="overflow-x-auto bg-white shadow rounded">
@@ -102,11 +248,8 @@ export const MissionsAdmin = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participants</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsable</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Objectif</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collecté</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sous-titre</th>
-                <th className="px-6 py-3 text-right"></th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discussion</th>
+                <th className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -126,15 +269,35 @@ export const MissionsAdmin = () => {
                       {mission.nbParticipants || 0}
                     </button>
                   </td>
-                  <td className="px-6 py-4">{mission.responsable?.nom} {mission.responsable?.prenom}</td>
-                  <td className="px-6 py-4">{mission.goal} €</td>
-                  <td className="px-6 py-4">{mission.raised} €</td>
-                  <td className="px-6 py-4">{mission.subtitle}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => startEdit(mission)} className="text-blue-600 hover:text-blue-800">
-                      <FaEdit />
-                    </button>
-                    <button onClick={() => deleteMission(mission.id)} className="text-red-600 hover:text-red-800">
+                  <td className="px-6 py-4">
+                    {discussions[mission.id] ? (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-green-600">Active</span>
+                        <button
+                          onClick={() => deleteDiscussion(discussions[mission.id].id, mission.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Supprimer la discussion"
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => createDiscussion(mission.id)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        title="Créer une discussion"
+                      >
+                        <FaPlus size={14} />
+                        <span>Créer</span>
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => deleteMission(mission.id)} 
+                      className="text-red-600 hover:text-red-800"
+                      title="Supprimer la mission"
+                    >
                       <FaTrash />
                     </button>
                   </td>

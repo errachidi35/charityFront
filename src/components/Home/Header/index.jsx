@@ -50,7 +50,7 @@ export const Header = () => {
     });
 
 
-    const navItems = ["Home", "About", "Missions", "Gallery", "Contact"];
+    const navItems = ["Home", "About", "Missions", "Gallery"];
     return (
         <motion.header
             initial={hidden ? {
