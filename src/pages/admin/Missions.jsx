@@ -6,6 +6,9 @@ import axiosAdmin from "../../hooks/axiosAdmin";
 export const MissionsAdmin = () => {
   const [missions, setMissions] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [participants, setParticipants] = useState([]);
+  const [selectedMissionId, setSelectedMissionId] = useState(null);
   const [editingMission, setEditingMission] = useState(null);
   const [formData, setFormData] = useState({
     titre: "",
@@ -21,6 +24,17 @@ export const MissionsAdmin = () => {
       setMissions(res.data);
     } catch (err) {
       console.error("Erreur lors du chargement des missions :", err);
+    }
+  };
+
+  const fetchParticipants = async (missionId) => {
+    try {
+      const res = await axiosAdmin.get(`/mission/${missionId}/participants`);
+      setParticipants(res.data);
+      setSelectedMissionId(missionId);
+      setShowParticipantsModal(true);
+    } catch (err) {
+      console.error("Erreur lors du chargement des participants :", err);
     }
   };
 
@@ -80,47 +94,53 @@ export const MissionsAdmin = () => {
         <div className="overflow-x-auto bg-white shadow rounded">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
-  <tr>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lieu</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participants</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsable</th> */}
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Objectif</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collecté</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sous-titre</th>
-    <th className="px-6 py-3 text-right"></th>
-  </tr>
-</thead>
-<tbody className="bg-white divide-y divide-gray-200">
-  {missions.map((mission) => (
-    <tr key={mission.id}>
-      <td className="px-6 py-4">{mission.id}</td>
-      <td className="px-6 py-4">{mission.date}</td>
-      <td className="px-6 py-4">{mission.nom}</td>
-      <td className="px-6 py-4">{mission.lieu}</td>
-      <td className="px-6 py-4">{mission.description}</td>
-      {/* <td className="px-6 py-4">{mission.type_mission}</td>
-      <td className="px-6 py-4">{mission.nb_participants}</td>
-      <td className="px-6 py-4">{mission.id_responsable}</td> */}
-      <td className="px-6 py-4">{mission.goal} €</td>
-      <td className="px-6 py-4">{mission.raised} €</td>
-      <td className="px-6 py-4">{mission.subtitle}</td>
-      <td className="px-6 py-4 text-right space-x-2">
-        <button onClick={() => startEdit(mission)} className="text-blue-600 hover:text-blue-800">
-          <FaEdit />
-        </button>
-        <button onClick={() => deleteMission(mission.id)} className="text-red-600 hover:text-red-800">
-          <FaTrash />
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lieu</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participants</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsable</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Objectif</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collecté</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sous-titre</th>
+                <th className="px-6 py-3 text-right"></th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {missions.map((mission) => (
+                <tr key={mission.id}>
+                  <td className="px-6 py-4">{mission.id}</td>
+                  <td className="px-6 py-4">{mission.date}</td>
+                  <td className="px-6 py-4">{mission.nom}</td>
+                  <td className="px-6 py-4">{mission.lieu}</td>
+                  <td className="px-6 py-4">{mission.description}</td>
+                  <td className="px-6 py-4">{mission.typeMission}</td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => fetchParticipants(mission.id)}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {mission.nbParticipants || 0}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4">{mission.responsable?.nom} {mission.responsable?.prenom}</td>
+                  <td className="px-6 py-4">{mission.goal} €</td>
+                  <td className="px-6 py-4">{mission.raised} €</td>
+                  <td className="px-6 py-4">{mission.subtitle}</td>
+                  <td className="px-6 py-4 text-right space-x-2">
+                    <button onClick={() => startEdit(mission)} className="text-blue-600 hover:text-blue-800">
+                      <FaEdit />
+                    </button>
+                    <button onClick={() => deleteMission(mission.id)} className="text-red-600 hover:text-red-800">
+                      <FaTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
 
@@ -157,6 +177,48 @@ export const MissionsAdmin = () => {
                   <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Modifier</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {showParticipantsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white w-11/12 md:w-5/6 lg:w-4/5 p-6 rounded shadow-lg max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold mb-4">Participants de la mission #{selectedMissionId}</h2>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Nom</th>
+                    <th className="px-4 py-2 text-left">Prénom</th>
+                    <th className="px-4 py-2 text-left">Email</th>
+                    <th className="px-4 py-2 text-left">Téléphone</th>
+                    <th className="px-4 py-2 text-left">Compétences</th>
+                    <th className="px-4 py-2 text-left">Heures Contribuées</th>
+                    <th className="px-4 py-2 text-left">Date Participation</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {participants.map((p, idx) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-2">{p.benevole?.nom || "—"}</td>
+                      <td className="px-4 py-2">{p.benevole?.prenom || "—"}</td>
+                      <td className="px-4 py-2">{p.benevole?.email || "—"}</td>
+                      <td className="px-4 py-2">{p.benevole?.telephone || "—"}</td>
+                      <td className="px-4 py-2">{p.benevole?.competences || "Non renseigné"}</td>
+                      <td className="px-4 py-2">{p.benevole?.heuresContribuees || "0 h"}</td>
+                      <td className="px-4 py-2">{p.dateInscription || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="text-right mt-4">
+                <button
+                  onClick={() => setShowParticipantsModal(false)}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         )}
